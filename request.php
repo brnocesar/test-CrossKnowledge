@@ -2,6 +2,23 @@
 
 class SimpleJsonRequest
 {
+    private static function makeCache(string $url, array $opts)
+    {
+        $redis = (new Name\Space\Redis())->connect($_ENV('REDIS_HOSTNAME'), $_ENV('REDIS_PORT'));
+
+        $key = "{$opts['http']['method']}_$url";
+
+        if ( $redis->exists($key) ) {
+            return $redis->get($key);
+        }
+
+        $result = file_get_contents($url, false, stream_context_create($opts));
+
+        $redis->setEx($key, 3600, $result);
+
+        return $result;
+    }
+
     private static function makeRequest(string $method, string $url, array $parameters = null, array $data = null)
     {
         $opts = [
@@ -12,8 +29,12 @@ class SimpleJsonRequest
             ]
         ];
 
-        $url .= ($parameters ? '?' . http_build_query($parameters) : '');
-        return file_get_contents($url, false, stream_context_create($opts));
+        if ( $parameters ) {
+            ksort($parameters);
+            $url .= http_build_query($parameters);
+        }
+        
+        return is_null($data) ? self::makeCache($url, $opts) : file_get_contents($url, false, stream_context_create($opts));
     }
 
     public static function get(string $url, array $parameters = null)
