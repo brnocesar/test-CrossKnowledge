@@ -27,6 +27,36 @@
                     document.body.appendChild(el)
                 })
             })();
+
+            (() => {
+                var date_elements = document.getElementsByClassName('js-date-format');
+                
+                for (date of date_elements) {
+                    countTime(date)
+                }
+            })();
+
+            function countTime(date) {
+
+                let seconds = parseInt((new Date() - new Date(date.innerText)) / 1000)
+
+                if ( seconds < 60 ) {
+                    date.innerText = `${seconds} seconds ago`
+                    return
+                }
+
+                let minutes = seconds / 60
+                if ( minutes < 60 ) {
+                    date.innerText = `${minutes} minutes ago`
+                    return
+                }
+
+                let hours = minutes / 60
+                if ( hours < 24 ) {
+                    date.innerText = `${hours} hours ago`
+                    return
+                }
+            }
         </script>
     </body>
 </html>
